@@ -6,22 +6,10 @@ else
 SAFESTRING=-package bytes
 endif
 
-METAOCAML ?= 0
-
-DERIVING=$(shell ocamlfind query js_of_ocaml.deriving -format "%p" 2> /dev/null)
-
-ifneq ($(DERIVING),)
-DERIVING_SYNTAX = js_of_ocaml-camlp4.deriving deriving.syntax.std
-endif
-
-ifneq ($(CAMLP4_SYNTAXES),)
-SYNTAXES= lwt.syntax js_of_ocaml-camlp4 $(DERIVING_SYNTAX)
-endif
 
 JSFILES= +toplevel.js +dynlink.js +nat.js
 
 PACKAGES= \
-	js_of_ocaml $(DERIVING) \
 	sketch_evaluator \
 	dynlink
 
@@ -39,18 +27,6 @@ JSFILES += +graphics.js
 PACKAGES += graphics js_of_ocaml-lwt.graphics
 endif
 
-ifeq ($(METAOCAML),1)
-METAOCAML_DIR=$(shell ocamlfind query stdlib)
-BER_EXPORT=trx.cmi runcode.cmi print_code.cmi compiler-libs/asttypes.cmi
-BER=metalib.cma bertop.cmo \
-	${addprefix -export-unit ${METAOCAML_DIR}/, ${BER_EXPORT}}
-#METAOCAML DOES NOT WORK WITH CAMLP4
-SYNTAXES=
-#CPPO_OPT+= -D metaocaml
-endif
-
-TYXML_DIR=$(shell ocamlfind query tyxml)
-
 #-jsopt "--pretty"
 MKTOP=jsoo_mktop -verbose $(SAFESTRING) -g \
 	${addprefix -top-syntax , ${SYNTAXES}} \
@@ -63,8 +39,7 @@ $(TOPLEVEL_NAME).js:
 	$(MKTOP) \
 	$(BER) \
 	${addprefix -jsopt , ${JSFILES}} \
-	-package sketch_evaluator \
 	-o $(TOPLEVEL_NAME).byte
 
-clean::
-	rm -f *.cm[io] *.byte *.native *.js
+clear::
+	rm *.js *.byte
