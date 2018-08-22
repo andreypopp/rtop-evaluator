@@ -1,15 +1,25 @@
 (executable
   ((name evaluator)
-   (js_of_ocaml ((flags (:standard --toplevel --linkall +toplevel.js +dynlink.js))))
-   (preprocess (pps (js_of_ocaml-ppx ppx_deriving.std)))
-   (libraries (js_of_ocaml js_of_ocaml-compiler js_of_ocaml-toplevel reason compiler-libs))))
+   (public_name sketch_evaluator)
+   (libraries (
+           js_of_ocaml 
+           js_of_ocaml-compiler 
+           js_of_ocaml-toplevel 
+           reason 
+           compiler-libs
+        ))
+   (optional)
+   (library_flags (-linkall))
+   (preprocess (pps (js_of_ocaml-ppx)))
+   (flags (:standard -rectypes))
+  ))
 
-(rule ((targets (evaluator.js))
-       (action (run js_of_ocaml --toplevel --linkall --no-runtime
-               ${lib:js_of_ocaml-compiler:runtime.js}
-               ${lib:js_of_ocaml-compiler:toplevel.js}
-               ${lib:js_of_ocaml-compiler:dynlink.js}
-               --export ${path:stdlib.export} ${path:evaluator.bc} -I +stdlib/compiler-libs))))
+#; (rule ((targets (evaluator.js))
+#;        (action (run js_of_ocaml --toplevel --linkall --no-runtime
+#;                ${lib:js_of_ocaml-compiler:runtime.js}
+#;                ${lib:js_of_ocaml-compiler:toplevel.js}
+#;                ${lib:js_of_ocaml-compiler:dynlink.js}
+#;                --export ${path:stdlib.export} ${path:evaluator.bc} -I +stdlib/compiler-libs))))
 
 (rule ((targets (stdlib.export))
        (action (run jsoo_listunits stdlib compiler-libs.common -o stdlib.export))))
@@ -27,7 +37,11 @@
                     -jsopt +toplevel.js
                     -jsopt +nat.js
                     -jsopt +dynlink.js
+                    -jsopt "-I . --file ${path:evaluator.js}"
                 #;     ${path:evaluator.bc}
                     -o toplevel.js
                     -I +stdlib/compiler-libs)
         )))
+
+(rule ((targets (evaluator.js))
+       (action (run js_of_ocaml ${path:evaluator.bc} --pretty))))
